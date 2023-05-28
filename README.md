@@ -43,8 +43,10 @@ _**NOTE (important if you didn't know this was possible!)**: technically it's no
 4. Run the bot:
 
    ```bash
-   python Telegram_C2C.py
+   python3 Telegram_C2C.py
    ```
+
+5. It will ask for either your phone number or bot token. You have to enter your phone number in order for the bot to work (e.g. `+393456789000`), and confirm the code you receive. From this moment, the bot will store your session and behave as your user, based on the python code in this repo. Enjoy!
 
 ## Contributing
 
