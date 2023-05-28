@@ -48,6 +48,30 @@ _**NOTE (important if you didn't know this was possible!)**: technically it's no
 
 5. It will ask for either your phone number or bot token. You have to enter your phone number in order for the bot to work (e.g. `+393456789000`), and confirm the code you receive. From this moment, the bot will store your session and behave as your user, based on the python code in this repo. Enjoy!
 
+## Note for Nix users
+
+I'm a NixOS user. If you know you know. Here's a Nix shell tailored to run this bot, just run `nix-shell shell_c2c.nix`:
+```nix
+# shell_c2c.nix
+{ pkgs ? import <nixpkgs> {} }:
+
+let
+  c2c-python-packages = python-packages: with python-packages; [
+    pip
+    python-telegram-bot
+    telethon
+  ];
+  python-c2c = pkgs.python310.withPackages c2c-python-packages;
+
+in
+
+  pkgs.mkShell {
+    nativeBuildInputs = [
+      python-c2c
+    ];
+}
+```
+
 ## Contributing
 
 Contributions are welcome! If you find any issues or have suggestions for improvement, please open an issue or submit a pull request.
