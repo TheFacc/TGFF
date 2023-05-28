@@ -27,14 +27,13 @@ with TelegramClient('name', API_ID, API_HASH) as client:
             # Build message append
             message_append = f"Source: [{chat_name}](t.me/c/{chat_id}/{message.id})"
 
+            # Ignore messages containing excluded words
             if not any(word in message_txt.lower() for word in excluded_words):
                 if message.media:
-                    # print("New media received: " + message_txt)
                     caption = utils.parse_mode(message_append, 'md')
                     await client.send_file(target_id, message.media, caption=caption) # remove original text for media
                 else:
-                    # print("New message received: " + message_txt)
-                    await client.send_message(target_id, message_txt+"\n\n"+message_append, parse_mode='md')
+                    await client.send_message(target_id, message_txt+"\n\n"+message_append, parse_mode='md') # forward full text for non-media
             else:
                 print("Dirty message ignored ;)")
 
