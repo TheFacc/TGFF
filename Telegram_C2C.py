@@ -1,16 +1,23 @@
 from telethon import TelegramClient, events
-from config import API_ID, API_HASH, CHAT_IDS, TARGET_IDS, excluded_words
+from config import API_ID, API_HASH, CHAT_IDS, TARGET_IDS, excluded_words # import data from config.py
 
-with TelegramClient('name', API_ID, API_HASH) as client:
-    client.start()
-    print("Client started!")
-    print("Source IDs: ", CHAT_IDS)
-    print("Target IDs: ", TARGET_IDS)
+async def print_chat_names(client):
+    for chat_group, target_id in zip(CHAT_IDS, TARGET_IDS):
+        target_entity = await client.get_entity(target_id)
+        target_name = target_entity.title
+        print(f"🔵 All messages from the following chats will be forwarded to target chat >> {target_name}")
+        for chat_id in chat_group:
+            chat_entity = await client.get_entity(chat_id)
+            chat_name = chat_entity.title
+            print(f"    - {chat_name}")
+    print("🟣 Messages containing these words will be ignored: ")
+    badwords = ""
+    for word in excluded_words:
+        badwords += word + ", "
+    print(f"    {badwords[:-2]}")
 
-    @client.on(events.NewMessage(chats=sum(CHAT_IDS, []))) # Flatten CHAT_IDS for event filter
-    async def my_event_handler(event):
-        message = event.message
-        message_txt = message.message
+async def forward_message(client, message):
+        message_txt = message.text
 
         # Get chat name
         chat_id = message.peer_id.channel_id
@@ -30,13 +37,30 @@ with TelegramClient('name', API_ID, API_HASH) as client:
             message_append = f"Source: [{chat_name}](t.me/c/{chat_id}/{message.id})"
 
             # Ignore messages containing excluded words
-            if not any(word in message_txt.lower() for word in excluded_words):
+            if not any(word in message.raw_text.lower() for word in excluded_words):
                 if message.media:
-                    await client.send_file(target_id, message.media, caption=message_append, parse_mode='md') # remove original text for media
+                    if message.media.webpage:
+                        # Handle messages with link previews separately
+                        await client.send_message(target_id, message_txt+"\n\n"+message_append, parse_mode='md')
+                    else:
+                        # For other media types, use send_file
+                        await client.send_file(target_id, message.media, caption=message_append, parse_mode='md') # remove original text for media
                 else:
                     await client.send_message(target_id, message_txt+"\n\n"+message_append, parse_mode='md') # forward full text for non-media
             else:
-                print("Dirty message ignored ;)")
+                print(" >> Dirty message ignored ;)")
 
+with TelegramClient('name', API_ID, API_HASH) as client:
+    client.start()
+    print("****************************************************")
+    print("**   Telegram C2C - Chat to Chat Forwarding bot   **")
+    print("****************************************************")
+    print("🟢 Client started!")
+    client.loop.run_until_complete(print_chat_names(client))
+    print("🟢 Listening...")
+
+    @client.on(events.NewMessage(chats=sum(CHAT_IDS, []))) # Flatten CHAT_IDS for event filter
+    async def my_event_handler(event):
+        await forward_message(client=client, message=event.message)
 
     client.run_until_disconnected()
