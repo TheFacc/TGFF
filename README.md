@@ -2,6 +2,13 @@
 
 This Telegram bot allows you to forward messages from multiple source chats to multiple destination chats (not strictly channels). It is built using Python and the Telethon library.
 
+Features:
+- **Filtering**: ignore message if it contains some specific word/string.
+
+To do:
+- Ability to retrieve message history since last run (currently it forwards only messages received while it's running)
+- Make an actual bot to manage its functionality and edit its config on the go
+
 _**NOTE (important if you didn't know this was possible!)**: technically it's not really a Telegram bot. It's kind of a headless bot. It runs on your computer and does stuff, but does not link to an actual bot created with BotFather. It simply uses your Telegram session, so it behaves as a user. This is possible with **[Telethon](https://github.com/LonamiWebs/Telethon)**. This is the only way to manage channels like this, since you cannot add a bot to a channel unless you're an admin of the source channel._
 
 ## Prerequisites
@@ -23,21 +30,27 @@ _**NOTE (important if you didn't know this was possible!)**: technically it's no
    pip install telethon
    ```
 
-3. Create a `config.py` file and add your Telegram API credentials (these are just examples, use your own! Get API/Hash from [here](https://my.telegram.org/) and IDs from [@getidsbot](t.me/getidsbot)):
+3. Create a `config.py` file and add your Telegram API credentials (these are just fake examples, use your own!). Get API/Hash strings from [here](https://my.telegram.org/) and numeric IDs of source/target chats from [@getidsbot](t.me/getidsbot). An ID can also be the handle/link/etc, as shown below or in [Telethon documentation](https://docs.telethon.dev/en/stable/concepts/entities.html#getting-entities).:
 
    ```python
    API_ID = YOUR_API_ID # '1234567'
    API_HASH = YOUR_API_HASH # 'd6s7687nm7hf5ndgb6d8ssv7dg'
    CHAT_IDS = [
-     [-1001112223333, -1001112223334] # source group 1
-     [-1001112223335] # source group 2
+     [-100123333, -100123334, 'source1', -100123456] # source group 1
+     [-100123789, 'telegram.me/+v12a34b56c'] # source group 2
    ]
    TARGET_IDS = [
      'mychannel1' # destination chat 1
      'mychannel2' # destination chat 2
    ]
-   # Ignore messages containing any of these words
-   excluded_words = ['t.me','joinchat','amazon','prezz','🔥']
+   # Ignore messages containing any of these words:
+   # - exclude globally
+   EXCLUDED_WORDS = ['t.me','joinchat','giveaway','trading','🔥']
+   # - exclude per-group (list of lists, one per source group)
+   EXCLUDED_WORDS_GROUP = [
+    ['group1 badword', 'another'],
+    [], # can be empty if you just want to ignore globals
+   ]
    ```
 
 4. Run the bot:
@@ -74,7 +87,7 @@ in
 
 ## Contributing
 
-Contributions are welcome! If you find any issues or have suggestions for improvement, please open an issue or submit a pull request.
+Contributions are welcome! If you find any issues or have suggestions for improvement, please open an issue, submit a pull request, or [contact me](https://thefacc.github.io/).
 
 ## License
 
