@@ -49,18 +49,29 @@ _**NOTE (important if you didn't know this was possible!)**: technically it's no
       - **required keys** (pair):
         - `sources` (list): multiple sources chat IDs
         - `target` (string): single target destination ID
-      - **optional keys** (config):
+      - **optional keys** (config) for group-specific setting:
         - `printSource` (bool, default True): append to the message text/caption a link to the original message
         - `printMediaCaption` (bool, default True): if True, for medias append the same caption, otherwise remove it
         - `bannedWords` (list of strings): ignore message if it contains a string from this list (for this pair only)
-        - `includeWords` (list of strings): _forcefully_ include message if it contains a string from this list (for this pair only)(overrides any banned words and buttons!)
+        - `includeWords` (list of strings): _forcefully_ include message if it contains a string from this list (for this pair only)(overrides ANY banned words and button setting!)
         - `ignoreAll` (bool, default False): ignore ALL messages, except those containing words present in `includeWords` (makes `bannedWords` useless)
+        - `ignoreButtons` (bool, default False): False = ignore ALL messages containing buttons, True = override global setting that ignore buttons
+    
+    Global settings:
    - `BANNED_WORDS` (list of strings, optional): same as optional key, but globally for all pairs
    - `INCLUDE_WORDS` (list of strings, optional): same as optional key, but globally for all pairs
    - `IGNORE_BUTTONS` (bool, optional, default False): ignore message globally if it has buttons (common for spam messages)
    - `LOG_TO_CHAT` (string, optional, default empty): target ID of a chat (must be in the format `"telegram.me/+v12a34b56c"`) to log the bot behaviour (same as cli output). It will log ALL forwarded and ignored messages, text only, with the reason for ignoring.
    - `MARK_PROCESSED_AS_READ` (bool, optional, default False): mark source chat as read after forwarding/ignoring the message (note that only the new message will be processed, not all the unread messages! But the full chat will be marked as read. Forward history is todo.)
    The 'ID' can be numeric/handle/link/etc as shown below or in [Telethon documentation](https://docs.telethon.dev/en/stable/concepts/entities.html#getting-entities). You can get the numeric IDs (most reliable) of a chat by forwarding a message from that chat to [@getidsbot](https://t.me/getidsbot).
+   
+   **Note on the global/specific logic:** the global settings apply to all chats in general, but can be overridden by the group-specific setting with the same name.
+   - Include is power: the local `includeWords` and the global `INCLUDE_WORDS` have priority over anything (they override also the local `ignoreAll`!)
+   - Words include/ignore has the priority over button include/ignore (e.g. a message containing a banned word will not be forwarded, even if it has buttons and you set `includeButtons=True`)
+   - The local `includeWords` overrides both the local `bannedWords`/`ignoreAll` and the global `BANNED_WORDS`
+   - The local `ignoreButtons` overrides the global `IGNORE_BUTTONS` in all cases.
+
+   Below is an example configuration. 
 
    ```python
    ### config.py ###

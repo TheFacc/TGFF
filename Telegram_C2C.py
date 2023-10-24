@@ -32,6 +32,8 @@ for chat in CHATS:
         chat['bannedWords'] = []
     if not 'includeWords' in chat:
         chat['includeWords'] = []
+    if not 'ignoreButtons' in chat:
+        chat['ignoreButtons'] = False
 
 try:
     from config import BANNED_WORDS # import global excluded words
@@ -94,7 +96,7 @@ async def forward_message(client, message):
         chat_name = chat_entity.title
 
         print("\n","_"*100)
-        toprint = f"🆕 New message from {chat_name} (ID:{chat_id}):\n🕓 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        toprint = f"🆕 **New message from {chat_name} (ID:{chat_id}):\n🕓 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
 
         # Find the index of the chat ID group in each sources group
         chat_group_index = next((i for i, chat_group in enumerate([chat['sources'] for chat in CHATS]) if any(str(chat_id) in str(chat) for chat in chat_group)), None)
@@ -102,35 +104,46 @@ async def forward_message(client, message):
         if chat_group_index is not None:
             CHAT = CHATS[chat_group_index]
             msgtxt = message.raw_text.lower()
-            # Including logic (force):
+
+            # INCLUDE logic (force):
+            # - force forward if it contains includeWords
             bMessageHasIncludeWords = False
             for word in CHAT['includeWords'] + INCLUDE_WORDS:
                 if word.lower() in msgtxt:
                     bMessageHasIncludeWords = True
-                    # bMessageHasButtons = False # ignore buttons
-                    # bMessageHasBannedWords = False # ignore banned words
                     break
-            # Ignoring logic: (if not forcefully included)
-            bIgnoreMessage = False
-            if not bMessageHasIncludeWords:
-                # - check if ignore all
+
+            # IGNORE logic: (if not forcefully included by including words)
+            if bMessageHasIncludeWords:
+                bIgnoreMessage = False
+            else:
+                # -0- check if ignore all
                 bIgnoreAll = 'ignoreAll' in CHAT and CHAT['ignoreAll']
                 if bIgnoreAll:
                     bIgnoreMessage = True
                 else:
-                    # - check buttons
-                    try:
-                        amount_of_buttons = len(message.reply_markup.__dict__["rows"])
-                        bMessageHasButtons = IGNORE_BUTTONS and amount_of_buttons > 0
-                    except:
-                        bMessageHasButtons = False
-                    # - check excluded words (global + group-specific)
+                    # -1- check excluded words (global + group-specific)
                     banned_words_in_message = []
                     for word in BANNED_WORDS + CHAT['bannedWords']:
                         if word.lower() in msgtxt:
                             banned_words_in_message.append(word)
                     bMessageHasBannedWords = len(banned_words_in_message) > 0
-                    bIgnoreMessage = bMessageHasButtons or bMessageHasBannedWords
+                    if bMessageHasBannedWords: # has banned words, we dont even need to check buttons
+                        bIgnoreMessage = True
+                    else:
+                        # -2- check buttons
+                        if 'ignoreButtons' in CHAT: # a group-specific setting was set, so use that and override global button setting
+                            bIgnoreButtons = CHAT['ignoreButtons']
+                        else: # use global
+                            bIgnoreButtons = IGNORE_BUTTONS
+                        if bIgnoreButtons: # if we need to ignore buttons, check if the message has buttons
+                            try:
+                                amount_of_buttons = len(message.reply_markup.__dict__["rows"])
+                                bIgnoreMessage = amount_of_buttons > 0
+                            except:
+                                bIgnoreMessage = False
+                        else:
+                            bIgnoreMessage = False
 
             # Build message/log text
             if CHAT['printSource']:
@@ -138,8 +151,7 @@ async def forward_message(client, message):
             else:
                message_src = ""
 
-            if not bIgnoreMessage or bMessageHasIncludeWords:
-            # if chat_group_index is not None:
+            if not bIgnoreMessage:
                 # Get target chat name
                 target_id = CHAT['target']
                 target_entity = await client.get_entity(target_id)
@@ -156,7 +168,7 @@ async def forward_message(client, message):
                         await client.send_file(target_id, message.media, caption=(message_txt+message_src) if CHAT["printMediaCaption"] else message_src, parse_mode='md')
                 else:
                     await client.send_message(target_id, message_txt+message_src, parse_mode='md') # forward full text for non-media
-            else:
+            else: # ignore message
                 if bIgnoreAll:
                     toprint += f"\n🚫 ignored - group is set to ignore all messages, except those containing: {CHAT['includeWords']}**"
                 elif bMessageHasBannedWords:
@@ -186,5 +198,5 @@ with TelegramClient('name', API_ID, API_HASH) as client:
     async def my_event_handler(event):
         message = event.message
         await forward_message(client=client, message=message)
-        
+
     client.run_until_disconnected()
