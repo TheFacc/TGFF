@@ -9,7 +9,8 @@ Features:
   - option to force forward if it contains some specific word/string
   - option to ignore all messages, and only forward those forced
 - **Print source**: option to include a link in the forwarded message redirecting to the source message
-- **Mark as read**: option to mark as read a message when it's processed (forwarded or ignored), so if the bot stops for some reason, you can see what messages it lost (note that if you start it again, for now it will process a new message when it arrives, marking as read all previous messages as well without forwarding them!)
+- **Mark as read**: option to mark as read a message when it's processed (forwarded or ignored), so if the bot stops for some reason, you can see what messages it lost (note that if you start it again, for now it will process a new message when it arrives, marking as read all previous messages as well without forwarding them! Forwarding history is a todo feature...)
+- **Log to chat**: the bot logs its behaviour in the console, but it's also possible to forward the same log to a Telegram chat, so you can see it on the go.
 
 To do:
 - Ability to retrieve message history since last run (currently it forwards only messages received while it's running)
@@ -57,9 +58,12 @@ _**NOTE (important if you didn't know this was possible!)**: technically it's no
    - `BANNED_WORDS` (list of strings, optional): same as optional key, but globally for all pairs
    - `INCLUDE_WORDS` (list of strings, optional): same as optional key, but globally for all pairs
    - `IGNORE_BUTTONS` (bool, optional, default False): ignore message globally if it has buttons (common for spam messages)
+   - `LOG_TO_CHAT` (string, optional, default empty): target ID of a chat (must be in the format `"telegram.me/+v12a34b56c"`) to log the bot behaviour (same as cli output). It will log ALL forwarded and ignored messages, text only, with the reason for ignoring.
+   - `MARK_PROCESSED_AS_READ` (bool, optional, default False): mark source chat as read after forwarding/ignoring the message (note that only the new message will be processed, not all the unread messages! But the full chat will be marked as read. Forward history is todo.)
    The 'ID' can be numeric/handle/link/etc as shown below or in [Telethon documentation](https://docs.telethon.dev/en/stable/concepts/entities.html#getting-entities). You can get the numeric IDs (most reliable) of a chat by forwarding a message from that chat to [@getidsbot](https://t.me/getidsbot).
 
    ```python
+   ### config.py ###
    # Account connection
    API_ID = YOUR_API_ID # '1234567'
    API_HASH = YOUR_API_HASH # 'd6s7687nm7hf5ndgb6d8ssv7dg'
@@ -94,7 +98,7 @@ _**NOTE (important if you didn't know this was possible!)**: technically it's no
           ],
           'target': 'telegram.me/+dBRuc123456', # destination for pair 3
           # config example 3:
-          # ...nothing >> it will use default values (forward all, print caption and source)
+          # ...nothing >> it will use default values (i.e. forward all, print caption and source)
       },
       # ... as many pairs as you want
     ]
@@ -102,6 +106,9 @@ _**NOTE (important if you didn't know this was possible!)**: technically it's no
    IGNORE_BUTTONS = True
    BANNED_WORDS = ['t.me','join now','giveaway','trading','🔥']
    INCLUDE_WORDS = ['if a message contains this','then forward it no matter what']
+   # Additional options
+   MARK_PROCESSED_AS_READ = True
+   LOG_TO_CHAT = "https://t.me/+dBRuc123456"
    ```
 
 4. Run the bot:
