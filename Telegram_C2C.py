@@ -32,8 +32,6 @@ for chat in CHATS:
         chat['bannedWords'] = []
     if not 'includeWords' in chat:
         chat['includeWords'] = []
-    if not 'ignoreButtons' in chat:
-        chat['ignoreButtons'] = False
 
 try:
     from config import BANNED_WORDS # import global excluded words
