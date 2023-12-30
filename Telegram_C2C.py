@@ -137,7 +137,8 @@ async def forward_message(client, message):
                         if bIgnoreButtons: # if we need to ignore buttons, check if the message has buttons
                             try:
                                 amount_of_buttons = len(message.reply_markup.__dict__["rows"])
-                                bIgnoreMessage = amount_of_buttons > 0
+                                bMessageHasButtons = amount_of_buttons > 0
+                                bIgnoreMessage = bMessageHasButtons
                             except:
                                 bIgnoreMessage = False
                         else:
